@@ -10,16 +10,26 @@ import stepan.gorokhov.music.domain.models.Track
 import stepan.gorokhov.music.domain.repositories.TrackRepository
 import javax.inject.Inject
 
+sealed class HomeScreenState{
+    object Loading: HomeScreenState()
+    data class LoadedTracks(val playlist: Playlist):HomeScreenState()
+}
+
 class HomeScreenViewModel @Inject constructor(private val repository: TrackRepository):ViewModel() {
-    private val _favouritesList = MutableStateFlow(Playlist(tracks = listOf()))
     private val currentTrack = repository.currentTrack
     private val isPlaying = repository.isPlaying
-    val favouritesList: StateFlow<Playlist> get() = _favouritesList
+    private val _screenState:MutableStateFlow<HomeScreenState> = MutableStateFlow(HomeScreenState.Loading)
+    val screenState:StateFlow<HomeScreenState> get() = _screenState
+
     init {
+        update()
+    }
+    fun update(){
+        _screenState.value = HomeScreenState.Loading
         viewModelScope.launch {
-            val resp = repository.getTracksByName("morgenshtern")
-            resp.onSuccess {
-                _favouritesList.value = it
+            val favouritePlaylist = repository.getFavoritePlaylist()
+            favouritePlaylist.onSuccess {
+                _screenState.value = HomeScreenState.LoadedTracks(it)
             }
         }
     }
@@ -35,7 +45,6 @@ class HomeScreenViewModel @Inject constructor(private val repository: TrackRepos
         else{
             play(track, playlist)
         }
-
     }
     private fun play(track: Track, playlist: Playlist){
         viewModelScope.launch {

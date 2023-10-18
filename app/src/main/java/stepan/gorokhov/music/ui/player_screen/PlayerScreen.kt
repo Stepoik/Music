@@ -2,6 +2,8 @@ package stepan.gorokhov.music.ui.player_screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +26,10 @@ import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -37,29 +43,40 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import stepan.gorokhov.music.R
 import stepan.gorokhov.music.domain.models.Artist
+import stepan.gorokhov.music.domain.models.ReplayState
 import stepan.gorokhov.music.domain.models.Track
 import stepan.gorokhov.music.ui.components.Minute
 import stepan.gorokhov.music.ui.theme.MusicTheme
 import kotlin.math.max
 
 @Composable
-fun PlayerScreen(viewModel: PlayerScreenViewModel) {
+fun PlayerScreen(
+    viewModel: PlayerScreenViewModel,
+    onClose: () -> Unit,
+    interactionSource: MutableInteractionSource
+) {
     val value = viewModel.progress.collectAsState().value
     PlayerScreenContent(
         progress = value,
+        replayState = viewModel.replayState.collectAsState().value,
         track = viewModel.track.collectAsState().value!!,
         isPlaying = viewModel.isPlaying.collectAsState().value,
         onPlayClick = { viewModel.play() },
         onStopClick = { viewModel.pause() },
-        onLoopClicked = {viewModel.getFirstTrack()},
-        onPlayNextClick = {viewModel.playNext()})
+        onLoopClicked = { viewModel.changeReplayState() },
+        onPlayNextClick = { viewModel.playNext() },
+        onClose = onClose,
+        interactionSource = interactionSource
+    )
 }
 
 
@@ -67,14 +84,20 @@ fun PlayerScreen(viewModel: PlayerScreenViewModel) {
 fun PlayerScreenContent(
     progress: Int,
     track: Track,
+    replayState: ReplayState,
     isPlaying: Boolean,
     onPlayClick: () -> Unit,
     onStopClick: () -> Unit,
-    onLoopClicked:()->Unit,
-    onPlayNextClick:()->Unit
+    onLoopClicked: () -> Unit,
+    onPlayNextClick: () -> Unit,
+    onClose: () -> Unit,
+    interactionSource: MutableInteractionSource
 ) {
     val gradient = Brush.linearGradient(
-        colors = listOf(MaterialTheme.colorScheme.onBackground, MaterialTheme.colorScheme.background),
+        colors = listOf(
+            MaterialTheme.colorScheme.onBackground,
+            MaterialTheme.colorScheme.background
+        ),
         start = Offset(0f, Float.POSITIVE_INFINITY),
         end = Offset(Float.POSITIVE_INFINITY, 100f)
     )
@@ -87,7 +110,11 @@ fun PlayerScreenContent(
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Header(Modifier.statusBarsPadding())
+            Header(
+                modifier = Modifier.statusBarsPadding(),
+                onClose = onClose,
+                interactionSource = interactionSource
+            )
             TrackCover(
                 Modifier
                     .padding(top = 40.dp)
@@ -109,6 +136,7 @@ fun PlayerScreenContent(
             StartStopBar(
                 modifier = Modifier.padding(top = 83.dp),
                 isPlaying = isPlaying,
+                replayState = replayState,
                 onPlayClick = onPlayClick,
                 onStopClick = onStopClick,
                 onLoopClick = onLoopClicked,
@@ -122,10 +150,11 @@ fun PlayerScreenContent(
 fun StartStopBar(
     modifier: Modifier = Modifier,
     isPlaying: Boolean,
+    replayState: ReplayState,
     onPlayClick: () -> Unit,
     onStopClick: () -> Unit,
-    onLoopClick:()->Unit,
-    onPlayNextClick:()->Unit
+    onLoopClick: () -> Unit,
+    onPlayNextClick: () -> Unit
 ) {
     val gradient = Brush.horizontalGradient(listOf(Color(0xFF842ED8), Color(0xFFDB28A9)))
     Row(
@@ -170,10 +199,36 @@ fun StartStopBar(
                 modifier = Modifier.clickable { onPlayNextClick() }
             )
         }
-        Icon(Icons.Filled.Refresh, contentDescription = null, tint = Color.White, modifier = Modifier.clickable {
-            onLoopClick()
-        })
+        ReplayIcon(onClick = onLoopClick, replayState = replayState)
     }
+}
+
+@Composable
+fun ReplayIcon(modifier: Modifier = Modifier, onClick: () -> Unit, replayState: ReplayState) {
+    var color = Color.White
+    val icon = when (replayState) {
+        ReplayState.NoReplay -> {
+            color = Color.White
+            R.drawable.replay
+        }
+
+        ReplayState.ReplayPlaylist -> {
+            color = Color.Cyan
+            R.drawable.replay
+        }
+
+        ReplayState.ReplayTrack -> {
+            color = Color.Cyan
+            R.drawable.replay_current
+        }
+    }
+    Icon(
+        painterResource(id = icon),
+        contentDescription = null,
+        tint = color,
+        modifier = modifier.clickable {
+            onClick()
+        })
 }
 
 
@@ -223,12 +278,20 @@ fun TrackNameWithArtist(modifier: Modifier = Modifier, track: Track) {
 }
 
 @Composable
-fun Header(modifier: Modifier = Modifier) {
+fun Header(
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+    interactionSource: MutableInteractionSource
+) {
     Row(
         modifier
             .fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Icon(Icons.Filled.KeyboardArrowLeft, contentDescription = "Back", tint = Color.White)
+        Icon(
+            Icons.Filled.KeyboardArrowLeft,
+            contentDescription = "Back",
+            tint = Color.White,
+            modifier = Modifier.clickable { onClose() })
         Icon(Icons.Filled.MoreVert, contentDescription = "", tint = Color.White)
     }
 }
@@ -259,12 +322,16 @@ fun TrackCover(modifier: Modifier = Modifier, track: Track) {
 @Composable
 fun PlayerScreenPreview() {
     MusicTheme {
-        PlayerScreenContent(0, Track(
-            "You Right",
-            listOf(Artist("Doja Cat"), Artist("The Weekend")),
-            isLiked = false,
-            image = "https://sun1-18.userapi.com/impf/SBl28x3wXUGO5w9jRpZ4mBxRk1vAsdMpBeCkXQ/Rt-MggsKdjE.jpg?size=1920x768&quality=95&crop=0,0,1326,530&sign=72f2c86328e2e9c5e781dbb0b0435718&type=cover_group",
-            url = ""
-        ), false, {}, {}, {}, {})
+        PlayerScreenContent(
+            0,
+            Track(
+                "You Right",
+                listOf(Artist("Doja Cat"), Artist("The Weekend")),
+                isLiked = false,
+                image = "https://sun1-18.userapi.com/impf/SBl28x3wXUGO5w9jRpZ4mBxRk1vAsdMpBeCkXQ/Rt-MggsKdjE.jpg?size=1920x768&quality=95&crop=0,0,1326,530&sign=72f2c86328e2e9c5e781dbb0b0435718&type=cover_group",
+                url = ""
+            ),
+            ReplayState.NoReplay, false, {}, {}, {}, {}, {}, MutableInteractionSource(),
+        )
     }
 }

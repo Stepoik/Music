@@ -17,23 +17,14 @@ import javax.inject.Inject
 class PlayerScreenViewModel @Inject constructor(private val trackRepository: TrackRepository) :
     ViewModel() {
     val isPlaying: StateFlow<Boolean> get() = trackRepository.isPlaying
+    val replayState = trackRepository.replayState
     val track: StateFlow<Track?> get() = trackRepository.currentTrack
     val progress = trackRepository.trackProgress
     private var firstTrack: Track? = null
     private var playlist: Playlist? = null
     private val mutex = Mutex()
-    fun getFirstTrack() {
-        viewModelScope.launch {
-            val playlist = trackRepository.getTracksByName("morgenshtern")
-            playlist.onSuccess {
-                mutex.withLock {
-                    if (it.tracks.isNotEmpty()) {
-                        firstTrack = it.tracks[0]
-                        this@PlayerScreenViewModel.playlist = it
-                    }
-                }
-            }
-        }
+    fun changeReplayState() {
+        trackRepository.nextReplayState()
     }
 
     fun play() {

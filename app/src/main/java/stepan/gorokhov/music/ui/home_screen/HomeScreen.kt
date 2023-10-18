@@ -6,6 +6,8 @@ import android.graphics.PorterDuffXfermode
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,8 +24,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +38,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -49,60 +59,113 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import stepan.gorokhov.music.R
 import stepan.gorokhov.music.domain.models.Artist
 import stepan.gorokhov.music.domain.models.Playlist
 import stepan.gorokhov.music.domain.models.Track
+import stepan.gorokhov.music.ui.components.LoadingScreen
 import stepan.gorokhov.music.ui.components.Minute
+import stepan.gorokhov.music.ui.components.SearchTextField
+import stepan.gorokhov.music.ui.components.TrackItem
 import stepan.gorokhov.music.ui.theme.MusicTheme
 
 @Composable
-fun HomeScreen(viewModel: HomeScreenViewModel) {
-    HomeScreenContent(viewModel.favouritesList.collectAsState().value, onSelectTrack = {track,playlist->
-        viewModel.selectTrack(track, playlist)
-    })
+fun HomeScreen(viewModel: HomeScreenViewModel, onSearchClicked: () -> Unit) {
+    HomeScreenContent(
+        viewModel.screenState.collectAsState().value,
+        onSelectTrack = { track, playlist ->
+            viewModel.selectTrack(track, playlist)
+        },
+        onSearchClicked = onSearchClicked,
+        onRefresh = {
+            viewModel.update()
+        }
+    )
 }
 
 @Composable
-fun HomeScreenContent(favourite: Playlist, onSelectTrack:(Track, Playlist)->Unit) {
+fun HomeScreenContent(
+    screenState: HomeScreenState,
+    onSelectTrack: (Track, Playlist) -> Unit,
+    onSearchClicked: () -> Unit,
+    onRefresh: () -> Unit
+) {
     Scaffold(contentWindowInsets = WindowInsets(0.dp)) {
         val scrollState = rememberScrollState()
         val onBackgroundColor = MaterialTheme.colorScheme.onBackground
-        Column(
-            Modifier
+        var loadedFirstTime by remember {
+            mutableStateOf(false)
+        }
+        SwipeRefresh(
+            state = rememberSwipeRefreshState(isRefreshing = screenState is HomeScreenState.Loading && loadedFirstTime),
+            onRefresh = onRefresh,
+            indicator = { s, trigger ->
+                SwipeRefreshIndicator(
+                    s,
+                    trigger,
+                    contentColor = MaterialTheme.colorScheme.onBackground
+                )
+            },
+            modifier = Modifier
                 .padding(it)
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .drawCircle(
-                    Offset(400f, 1200f),
-                    700f,
-                    color = onBackgroundColor,
-                    blurRadius = 800f,
-                    alpha = 0.5f
-                )
-                .statusBarsPadding()
-                .verticalScroll(scrollState)
         ) {
-            WelcomeText(modifier = Modifier.padding(start = 24.dp))
-            InputField(
-                value = "",
-                onValueChange = {},
-                modifier = Modifier
-                    .padding(start = 24.dp, top = 24.dp, end = 24.dp)
-                    .fillMaxWidth(),
-                hint = "Search song, playlist, artist..."
-            )
-            WelcomeScreen(favourite = favourite, onSelectTrack = onSelectTrack)
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .drawCircle(
+                        Offset(400f, 1200f),
+                        700f,
+                        color = onBackgroundColor,
+                        blurRadius = 800f,
+                        alpha = 0.5f
+                    )
+                    .statusBarsPadding()
+                    .verticalScroll(scrollState)
+            ) {
+                WelcomeText(modifier = Modifier.padding(start = 24.dp))
+                SearchTextField(
+                    value = "",
+                    onValueChange = {},
+                    modifier = Modifier
+                        .padding(start = 24.dp, top = 24.dp, end = 24.dp)
+                        .fillMaxWidth()
+                        .clickable { onSearchClicked() },
+                    enabled = false
+                )
+                when (screenState) {
+                    is HomeScreenState.Loading -> {
+                        LoadingScreen(
+                            Modifier
+                                .fillMaxSize()
+                                .weight(1f))
+                    }
+
+                    is HomeScreenState.LoadedTracks -> {
+                        loadedFirstTime = true
+                        WelcomeScreen(
+                            favourite = screenState.playlist,
+                            onSelectTrack = onSelectTrack
+                        )
+                    }
+                }
+            }
         }
     }
 }
-@Composable
-fun SearchScreen(){
 
-}
+
 @Composable
-fun WelcomeScreen(favourite: Playlist, onSelectTrack: (Track, Playlist) -> Unit, modifier: Modifier = Modifier){
-    Column(modifier = modifier){
+fun WelcomeScreen(
+    favourite: Playlist,
+    onSelectTrack: (Track, Playlist) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
         Genres(Modifier.padding(start = 24.dp, top = 40.dp))
         PlaylistList(Modifier.padding(top = 24.dp))
         Favourites(
@@ -114,35 +177,10 @@ fun WelcomeScreen(favourite: Playlist, onSelectTrack: (Track, Playlist) -> Unit,
 }
 
 @Composable
-fun TrackItem(track: Track, onSelect: (Track) -> Unit, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier.clickable { onSelect(track) },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row {
-            AsyncImage(
-                model = track.image,
-                contentDescription = null,
-                modifier = Modifier
-                    .padding(end = 16.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .size(56.dp)
-            )
-            Column {
-                Text(text = track.name, style = MaterialTheme.typography.titleMedium)
-                Text(text = track.artists[0].name, style = MaterialTheme.typography.labelSmall)
-            }
-        }
-        Minute(seconds = track.duration)
-    }
-}
-
-@Composable
 fun Favourites(
     modifier: Modifier = Modifier,
     favourite: Playlist,
-    onSelectTrack:(Track, Playlist)->Unit
+    onSelectTrack: (Track, Playlist) -> Unit
 ) {
     Column(modifier = modifier) {
         Text(
@@ -154,7 +192,7 @@ fun Favourites(
             TrackItem(track = track, modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 24.dp), onSelect = {
-                    onSelectTrack(it, favourite)
+                onSelectTrack(it, favourite)
             })
         }
     }
@@ -201,33 +239,6 @@ fun Genres(modifier: Modifier = Modifier) {
     }
 }
 
-@Composable
-fun InputField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    modifier: Modifier,
-    hint: String = ""
-) {
-    BasicTextField(value = value, onValueChange = onValueChange, modifier = modifier) {
-        Row(
-            Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color.DarkGray)
-                .padding(start = 16.dp)
-                .padding(vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Icon(Icons.Filled.Search, contentDescription = null, tint = Color.LightGray)
-            Box {
-                Text(text = value, style = MaterialTheme.typography.labelSmall)
-                if (value.isEmpty()) {
-                    Text(text = hint, style = MaterialTheme.typography.labelSmall)
-                }
-            }
-        }
-    }
-}
 
 @Composable
 fun WelcomeText(modifier: Modifier = Modifier) {
@@ -242,17 +253,7 @@ fun WelcomeText(modifier: Modifier = Modifier) {
 fun HomeScreenPreview() {
     MusicTheme {
         HomeScreenContent(
-            favourite = Playlist(
-                listOf(
-                    Track(
-                        "Bye bye",
-                        listOf(Artist("Marshmello")),
-                        url = "",
-                        image = "",
-                        isLiked = false
-                    )
-                )
-            ),{track, playlist ->  }
+            HomeScreenState.Loading, { track, playlist -> }, {}, {}
         )
     }
 }

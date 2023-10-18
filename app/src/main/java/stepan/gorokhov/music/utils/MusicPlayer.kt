@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.MediaPlayer.OnInfoListener
+import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
@@ -52,35 +53,47 @@ class MusicPlayer @Inject constructor(@AppContext private val context: Context) 
         }
     }
     suspend fun play(track: Track? =  null) {
-        println(track)
+        var isError = false
         withContext(Dispatchers.IO) {
-            if (track != null) {
-                scope.coroutineContext.cancelChildren()
-                try {
-                    mediaPlayer.release()
+            try {
+                if (track != null) {
+                    scope.coroutineContext.cancelChildren()
+                    try {
+                        mediaPlayer.release()
+                    } catch (e: Exception) {
+                        println(e)
+                    }
+                    mediaPlayer = initMediaPlayer()
+                    mediaPlayer.setOnCompletionListener {
+                        onCompletion()
+                    }
+                    mediaPlayer.setDataSource(track.url)
+                    mediaPlayer.prepare()
+                    _track.value = track
                 }
-                catch (e:Exception){
-                    println(e)
-                }
-                mediaPlayer = initMediaPlayer()
-                mediaPlayer.setOnCompletionListener {
-                    onCompletion()
-                }
-                mediaPlayer.setDataSource(track.url)
-                mediaPlayer.prepare()
-                _track.value = track
+            }
+            catch (e: IllegalStateException){
+                isError = true
             }
         }
-        _isPlaying.value = true
-        mediaPlayer.start()
-        progressUpdate()
+        if (!isError) {
+            _isPlaying.value = true
+            mediaPlayer.start()
+            progressUpdate()
+        }
     }
 
 
     private fun progressUpdate() {
         scope.launch(Dispatchers.IO) {
             while (isActive && mediaPlayer.isPlaying) {
-                _progress.value = mediaPlayer.currentPosition / 1000
+                try{
+                    _progress.value = mediaPlayer.currentPosition / 1000
+                }
+                catch (e: IllegalStateException){
+                    Log.e("MUSIC PLAYER", e.message.toString())
+                    break
+                }
                 delay(100)
             }
         }

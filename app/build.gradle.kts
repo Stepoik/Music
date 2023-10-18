@@ -55,14 +55,25 @@ android {
 }
 val dagger_version = "2.46.1"
 dependencies {
+    implementation(libs.androidx.navigation.compose)
+
+    //Retrofit
     implementation(libs.converter.gson)
     implementation(libs.retrofit)
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+
+    //Dagger
     implementation(libs.dagger)
-    implementation(libs.material3)
     kapt(libs.dagger.compiler)
-    implementation (libs.accompanist.systemuicontroller)
+
+    //UI
+    //Async images
     implementation(libs.coil.compose)
+
+    //Compose and other
+    implementation(libs.google.accompanist.swiperefresh)
+    implementation(libs.material3)
+    implementation (libs.accompanist.systemuicontroller)
     implementation(libs.core.ktx)
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.activity.compose)
@@ -70,6 +81,7 @@ dependencies {
     implementation(libs.ui)
     implementation(libs.ui.graphics)
     implementation(libs.ui.tooling.preview)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation("androidx.compose.material:material")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)

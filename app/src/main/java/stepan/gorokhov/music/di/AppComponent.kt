@@ -6,6 +6,7 @@ import dagger.Component
 import stepan.gorokhov.music.ui.home_screen.HomeScreenViewModel
 import stepan.gorokhov.music.ui.main_screen.MainScreenViewModel
 import stepan.gorokhov.music.ui.player_screen.PlayerScreenViewModel
+import stepan.gorokhov.music.ui.search_screen.SearchScreenViewModel
 import javax.inject.Qualifier
 import javax.inject.Scope
 
@@ -26,4 +27,5 @@ interface AppComponent {
     fun playerScreenViewModel():PlayerScreenViewModel
     fun homeScreenViewModel():HomeScreenViewModel
     fun mainScreenViewModel():MainScreenViewModel
+    fun searchScreenViewModel():SearchScreenViewModel
 }
