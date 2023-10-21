@@ -9,9 +9,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import stepan.gorokhov.music.domain.models.Playlist
-import stepan.gorokhov.music.domain.models.Track
-import stepan.gorokhov.music.domain.repositories.TrackRepository
+import stepan.gorokhov.domain.models.Playlist
+import stepan.gorokhov.domain.models.Track
+import stepan.gorokhov.domain.repositories.TrackRepository
 import javax.inject.Inject
 
 sealed class SearchState{
@@ -21,7 +21,11 @@ sealed class SearchState{
 class SearchScreenViewModel @Inject constructor(private val repository: TrackRepository):ViewModel() {
     private val _searchValue = MutableStateFlow("")
     val searchValue: StateFlow<String> get() = _searchValue
-    private val _searchState = MutableStateFlow<SearchState>(SearchState.SearchResult(Playlist(listOf())))
+    private val _searchState = MutableStateFlow<SearchState>(SearchState.SearchResult(
+        Playlist(
+            listOf()
+        )
+    ))
     val searchState:StateFlow<SearchState> get() = _searchState
     private val currentTrack = repository.currentTrack
     private val isPlaying = repository.isPlaying

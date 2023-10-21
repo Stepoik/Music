@@ -8,22 +8,19 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import stepan.gorokhov.domain.models.Playlist
+import stepan.gorokhov.domain.models.Track
 import stepan.gorokhov.music.data.datasources.TrackService
-import stepan.gorokhov.music.domain.models.Artist
-import stepan.gorokhov.music.domain.models.Playlist
-import stepan.gorokhov.music.domain.models.ReplayState
-import stepan.gorokhov.music.domain.models.Track
-import stepan.gorokhov.music.domain.repositories.TrackRepository
-import stepan.gorokhov.music.utils.MusicPlayer
+import stepan.gorokhov.utils.MusicPlayer
 import javax.inject.Inject
 
 class TrackRepositoryImpl @Inject constructor(
     private val trackService: TrackService,
     private val musicPlayer: MusicPlayer
 ) :
-    TrackRepository {
-    private val _replayState = MutableStateFlow(ReplayState.NoReplay)
-    override val replayState: StateFlow<ReplayState>
+    stepan.gorokhov.domain.repositories.TrackRepository {
+    private val _replayState = MutableStateFlow(stepan.gorokhov.domain.models.ReplayState.NoReplay)
+    override val replayState: StateFlow<stepan.gorokhov.domain.models.ReplayState>
         get() = _replayState
 
     override val isPlaying: StateFlow<Boolean>
@@ -46,13 +43,31 @@ class TrackRepositoryImpl @Inject constructor(
         _replayState.value = _replayState.value.next()
     }
 
+    override fun likeCurrent() {
+        if (currentPlaylist != null){
+            currentPlaylist = currentPlaylist!!.copy(tracks = currentPlaylist!!.tracks.map {
+                if (it == currentTrack.value){
+                    it.copy(isLiked = !it.isLiked)
+                }
+                else{
+                    it
+                }
+            })
+            musicPlayer.likeTrack()
+        }
+    }
+
     override suspend fun getTracksByName(name: String): Result<Playlist> {
         return runCatching<Playlist> {
             val trackList = trackService.searchTrack(name)
             Playlist(tracks = trackList.trackList.map {
                 Track(
-                    name = it.title, artists = listOf(Artist(it.artistName)),
-                    duration = it.duration, image = it.imageUrl, url = it.trackUrl, isLiked = false
+                    name = it.title,
+                    artists = listOf(stepan.gorokhov.domain.models.Artist(it.artistName)),
+                    duration = it.duration,
+                    image = it.imageUrl,
+                    url = it.trackUrl,
+                    isLiked = false
                 )
             })
         }
@@ -85,11 +100,13 @@ class TrackRepositoryImpl @Inject constructor(
                     if (currentPlaylist != null) {
                         var nextIndex: Int =
                             currentPlaylist!!.tracks.indexOf(currentTrack.value) + 1
-                        if (_replayState.value == ReplayState.ReplayPlaylist){
+                        println(currentTrack.value)
+                        println(nextIndex)
+                        if (_replayState.value == stepan.gorokhov.domain.models.ReplayState.ReplayPlaylist){
                             nextIndex %= currentPlaylist!!.tracks.size
                             musicPlayer.play(currentPlaylist!!.tracks[nextIndex])
                         }
-                        else if(_replayState.value == ReplayState.NoReplay){
+                        else if(_replayState.value == stepan.gorokhov.domain.models.ReplayState.NoReplay){
                             if (nextIndex < currentPlaylist!!.tracks.size){
                                 musicPlayer.play(currentPlaylist!!.tracks[nextIndex])
                             }
@@ -101,6 +118,10 @@ class TrackRepositoryImpl @Inject constructor(
                 }
             }
         }
+    }
+
+    override fun rewind(rewindValue: Float) {
+        musicPlayer.changeRewind(rewindValue)
     }
 
 

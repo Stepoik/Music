@@ -10,6 +10,12 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/components" />
+            <option value="$PROJECT_DIR$/domain" />
+            <option value="$PROJECT_DIR$/home_screen" />
+            <option value="$PROJECT_DIR$/player_screen" />
+            <option value="$PROJECT_DIR$/scopes" />
+            <option value="$PROJECT_DIR$/utils" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="false" />

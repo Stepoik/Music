@@ -55,6 +55,12 @@ android {
 }
 val dagger_version = "2.46.1"
 dependencies {
+    implementation(project(path = ":domain"))
+    implementation(project(path = ":components"))
+    implementation(project(path = ":player_screen"))
+    implementation(project(path = ":utils"))
+    implementation(project(path = ":scopes"))
+    implementation(project(path = ":home_screen"))
     implementation(libs.androidx.navigation.compose)
 
     //Retrofit
@@ -81,7 +87,6 @@ dependencies {
     implementation(libs.ui)
     implementation(libs.ui.graphics)
     implementation(libs.ui.tooling.preview)
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation("androidx.compose.material:material")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
