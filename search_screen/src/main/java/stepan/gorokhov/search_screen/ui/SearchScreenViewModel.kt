@@ -1,4 +1,4 @@
-package stepan.gorokhov.music.ui.search_screen
+package stepan.gorokhov.search_screen.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,18 +14,20 @@ import stepan.gorokhov.domain.models.Track
 import stepan.gorokhov.domain.repositories.TrackRepository
 import javax.inject.Inject
 
-sealed class SearchState{
-    object Loading:SearchState()
-    data class SearchResult(val playlist: Playlist):SearchState()
+internal sealed class SearchState{
+    object Loading: SearchState()
+    data class SearchResult(val playlist: Playlist): SearchState()
 }
-class SearchScreenViewModel @Inject constructor(private val repository: TrackRepository):ViewModel() {
+internal class SearchScreenViewModel @Inject constructor(private val repository: TrackRepository):ViewModel() {
     private val _searchValue = MutableStateFlow("")
     val searchValue: StateFlow<String> get() = _searchValue
-    private val _searchState = MutableStateFlow<SearchState>(SearchState.SearchResult(
-        Playlist(
-            listOf()
+    private val _searchState = MutableStateFlow<SearchState>(
+        SearchState.SearchResult(
+            Playlist(
+                listOf()
+            )
         )
-    ))
+    )
     val searchState:StateFlow<SearchState> get() = _searchState
     private val currentTrack = repository.currentTrack
     private val isPlaying = repository.isPlaying

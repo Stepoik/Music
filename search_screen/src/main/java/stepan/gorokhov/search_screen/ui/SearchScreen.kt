@@ -1,4 +1,4 @@
-package stepan.gorokhov.music.ui.search_screen
+package stepan.gorokhov.search_screen.ui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,12 +22,21 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import stepan.gorokhov.components.LoadingScreen
 import stepan.gorokhov.components.SearchTextField
-import stepan.gorokhov.components.TrackItem
-import stepan.gorokhov.music.ui.main_screen.mockTrack
-import stepan.gorokhov.music.ui.theme.MusicTheme
+
+
+val mockTrack = stepan.gorokhov.domain.models.Track(
+    "You Right",
+    listOf(
+        stepan.gorokhov.domain.models.Artist("Doja Cat"),
+        stepan.gorokhov.domain.models.Artist("The Weekend")
+    ),
+    isLiked = false,
+    url = "",
+    image = "https://static-cdn.jtvnw.net/jtv_user_pictures/e70b3a04-a290-43e5-854f-96a495a2a330-profile_image-70x70.png"
+)
 
 @Composable
-fun SearchScreen(viewModel: SearchScreenViewModel) {
+internal fun SearchScreen(viewModel: SearchScreenViewModel) {
     SearchScreenContent(viewModel.searchValue.collectAsState().value, {
         viewModel.search(it)
     }, viewModel.searchState.collectAsState().value, onSelectTrack = { track, playlist ->
@@ -35,7 +45,7 @@ fun SearchScreen(viewModel: SearchScreenViewModel) {
 }
 
 @Composable
-fun SearchScreenContent(
+internal fun SearchScreenContent(
     textFieldValue: String,
     onValueChange: (String) -> Unit,
     searchState: SearchState,
@@ -50,7 +60,7 @@ fun SearchScreenContent(
                 .fillMaxSize()
         ) {
 
-            stepan.gorokhov.components.SearchTextField(
+            SearchTextField(
                 value = textFieldValue,
                 onValueChange = onValueChange,
                 modifier = Modifier
@@ -61,7 +71,10 @@ fun SearchScreenContent(
             )
             when (searchState) {
                 is SearchState.Loading -> {
-                    stepan.gorokhov.components.LoadingScreen(Modifier.fillMaxSize().weight(1f))
+                    LoadingScreen(
+                        Modifier
+                            .fillMaxSize()
+                            .weight(1f))
                 }
 
                 is SearchState.SearchResult -> {
@@ -84,8 +97,8 @@ fun SearchScreenContent(
 
 @Composable
 @Preview
-fun SearchScreenPreview() {
-    MusicTheme {
+internal fun SearchScreenPreview() {
+    MaterialTheme {
         SearchScreenContent("", {}, SearchState.SearchResult(
             stepan.gorokhov.domain.models.Playlist(
                 listOf(

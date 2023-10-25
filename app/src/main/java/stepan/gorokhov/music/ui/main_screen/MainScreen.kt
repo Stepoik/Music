@@ -44,24 +44,14 @@ import stepan.gorokhov.home_screen.HomeDaggerViewModel
 import stepan.gorokhov.music.appComponent
 import stepan.gorokhov.home_screen.ui.HOME_SCREEN_ROUTE
 import stepan.gorokhov.home_screen.ui.homeScreen
-import stepan.gorokhov.music.ui.search_screen.navigateToSearchScreen
-import stepan.gorokhov.music.ui.search_screen.searchScreen
+import stepan.gorokhov.search_screen.ui.navigateToSearchScreen
+import stepan.gorokhov.search_screen.ui.searchScreen
 import stepan.gorokhov.music.ui.theme.MusicTheme
 import stepan.gorokhov.player_screen.PlayerDaggerViewModel
 import stepan.gorokhov.player_screen.ui.PlayerScreen
 import stepan.gorokhov.utils.daggerViewModel
 
 
-val mockTrack = stepan.gorokhov.domain.models.Track(
-    "You Right",
-    listOf(
-        stepan.gorokhov.domain.models.Artist("Doja Cat"),
-        stepan.gorokhov.domain.models.Artist("The Weekend")
-    ),
-    isLiked = false,
-    url = "",
-    image = "https://static-cdn.jtvnw.net/jtv_user_pictures/e70b3a04-a290-43e5-854f-96a495a2a330-profile_image-70x70.png"
-)
 
 @Composable
 fun MainScreen(viewModel: MainScreenViewModel) {
@@ -153,17 +143,14 @@ fun MainScreenContent(track: stepan.gorokhov.domain.models.Track?) {
         scaffoldState = sheetState
     ) {
         val appComponent = appComponent()
-        val homeDaggerViewModel = daggerViewModel {
-            HomeDaggerViewModel(appComponent)
-        }
         Box(Modifier.padding(it)) {
             val navController = rememberNavController()
             NavHost(navController = navController,
                 startDestination = HOME_SCREEN_ROUTE,
                 enterTransition = { fadeIn(animationSpec = tween(0)) },
                 exitTransition = { fadeOut(animationSpec = tween(0)) }) {
-                homeScreen(homeDaggerViewModel,onSearchClicked = { navController.navigateToSearchScreen() })
-                searchScreen()
+                homeScreen(appComponent,onSearchClicked = { navController.navigateToSearchScreen() })
+                searchScreen(appComponent)
             }
         }
     }

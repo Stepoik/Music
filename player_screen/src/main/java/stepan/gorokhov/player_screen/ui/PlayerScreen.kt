@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -83,7 +84,7 @@ fun PlayerScreen(
         onPlayNextClick = { viewModel.playNext() },
         onClose = onClose,
         onLikeClick = { viewModel.likeTrack() },
-        onValueChange = {viewModel.rewind(it)},
+        onValueChange = { viewModel.rewind(it) },
         interactionSource = interactionSource
     )
 }
@@ -217,7 +218,11 @@ internal fun StartStopBar(
 }
 
 @Composable
-internal fun ReplayIcon(modifier: Modifier = Modifier, onClick: () -> Unit, replayState: ReplayState) {
+internal fun ReplayIcon(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    replayState: ReplayState
+) {
     var color = Color.White
     val icon = when (replayState) {
         ReplayState.NoReplay -> {
@@ -247,39 +252,42 @@ internal fun ReplayIcon(modifier: Modifier = Modifier, onClick: () -> Unit, repl
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun TrackProgressBar(modifier: Modifier = Modifier, track: Track, currentSecond: Int, onValueChange:(Float)->Unit) {
+internal fun TrackProgressBar(
+    modifier: Modifier = Modifier,
+    track: Track,
+    currentSecond: Int,
+    onValueChange: (Float) -> Unit
+) {
     var progress by remember {
         mutableFloatStateOf(0f)
     }
     var changing by remember {
         mutableStateOf(false)
     }
-    var sliderThumbSize by remember{
+    var sliderThumbSize by remember {
         mutableIntStateOf(0)
     }
     val maxSize = 10
     val minSize = 0
     val step = 1
-    LaunchedEffect(changing){
-        if (!changing){
-            while (sliderThumbSize >= minSize){
-                sliderThumbSize-=step
+    LaunchedEffect(changing) {
+        if (!changing) {
+            while (sliderThumbSize >= minSize) {
+                sliderThumbSize -= step
                 delay(10)
             }
             sliderThumbSize = minSize
-        }
-        else{
-            while (sliderThumbSize < maxSize){
-                sliderThumbSize+=step
+        } else {
+            while (sliderThumbSize < maxSize) {
+                sliderThumbSize += step
                 delay(10)
             }
             sliderThumbSize = maxSize
         }
     }
-    val sliderValue = if (changing){
+    val sliderValue = if (changing) {
         progress
-    }
-    else{
+    } else {
         currentSecond.toFloat() / track.duration
     }
     Column(modifier = modifier) {
@@ -294,7 +302,7 @@ internal fun TrackProgressBar(modifier: Modifier = Modifier, track: Track, curre
             thumb = {
                 SliderDefaults.Thumb(
                     interactionSource = interactionSource,
-                    thumbSize = DpSize(sliderThumbSize.dp,sliderThumbSize.dp),
+                    thumbSize = DpSize(sliderThumbSize.dp, sliderThumbSize.dp),
                     modifier = Modifier.padding(top = 5.dp)
                 )
             },
@@ -314,13 +322,27 @@ internal fun TrackProgressBar(modifier: Modifier = Modifier, track: Track, curre
 }
 
 @Composable
-internal fun TrackNameWithArtist(modifier: Modifier = Modifier, track: Track, onLikeClick: () -> Unit) {
+internal fun TrackNameWithArtist(
+    modifier: Modifier = Modifier,
+    track: Track,
+    onLikeClick: () -> Unit
+) {
     val artists: String = track.artists.joinToString(separator = ", ") { it.name }
     val likedIcon = if (track.isLiked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder
     Row(modifier = modifier, horizontalArrangement = Arrangement.SpaceBetween) {
         Column {
-            Text(text = track.name, style = MaterialTheme.typography.titleLarge)
-            Text(text = artists, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = track.name,
+                style = MaterialTheme.typography.titleLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = artists,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
         Icon(
             likedIcon,
@@ -386,7 +408,7 @@ internal fun PlayerScreenPreview() {
                 image = "https://sun1-18.userapi.com/impf/SBl28x3wXUGO5w9jRpZ4mBxRk1vAsdMpBeCkXQ/Rt-MggsKdjE.jpg?size=1920x768&quality=95&crop=0,0,1326,530&sign=72f2c86328e2e9c5e781dbb0b0435718&type=cover_group",
                 url = ""
             ),
-            ReplayState.NoReplay, false, {}, {}, {}, {}, {}, {},{}, MutableInteractionSource(),
+            ReplayState.NoReplay, false, {}, {}, {}, {}, {}, {}, {}, MutableInteractionSource(),
         )
     }
 }

@@ -1,25 +1,19 @@
 @Suppress("DSL_SCOPE_VIOLATION") // TODO: Remove once KTIJ-19369 is fixed
 plugins {
-    alias(libs.plugins.androidApplication)
+    alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinAndroid)
     id("kotlin-kapt")
 }
 
 android {
-    namespace = "stepan.gorokhov.music"
+    namespace = "stepan.gorokhov.search_screen"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "stepan.gorokhov.music"
         minSdk = 24
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {
-            useSupportLibrary = true
-        }
+        consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
@@ -53,22 +47,14 @@ android {
         jvmToolchain(8)
     }
 }
-val dagger_version = "2.46.1"
+
 dependencies {
+
     implementation(project(path = ":domain"))
     implementation(project(path = ":components"))
-    implementation(project(path = ":player_screen"))
     implementation(project(path = ":utils"))
-    implementation(project(path = ":scopes"))
-    implementation(project(path = ":home_screen"))
-    implementation(project(path = ":search_screen"))
-    implementation(project(path = ":notifications"))
-
     implementation(libs.androidx.navigation.compose)
 
-    //Retrofit
-    implementation(libs.converter.gson)
-    implementation(libs.retrofit)
 
 
     //Dagger

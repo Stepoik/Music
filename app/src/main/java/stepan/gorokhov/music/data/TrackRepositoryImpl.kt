@@ -13,12 +13,12 @@ import stepan.gorokhov.domain.models.Track
 import stepan.gorokhov.music.data.datasources.TrackService
 import stepan.gorokhov.utils.MusicPlayer
 import javax.inject.Inject
-
+import stepan.gorokhov.domain.repositories.TrackRepository
 class TrackRepositoryImpl @Inject constructor(
     private val trackService: TrackService,
     private val musicPlayer: MusicPlayer
 ) :
-    stepan.gorokhov.domain.repositories.TrackRepository {
+    TrackRepository {
     private val _replayState = MutableStateFlow(stepan.gorokhov.domain.models.ReplayState.NoReplay)
     override val replayState: StateFlow<stepan.gorokhov.domain.models.ReplayState>
         get() = _replayState
@@ -58,19 +58,26 @@ class TrackRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getTracksByName(name: String): Result<Playlist> {
-        return runCatching<Playlist> {
-            val trackList = trackService.searchTrack(name)
-            Playlist(tracks = trackList.trackList.map {
-                Track(
-                    name = it.title,
-                    artists = listOf(stepan.gorokhov.domain.models.Artist(it.artistName)),
-                    duration = it.duration,
-                    image = it.imageUrl,
-                    url = it.trackUrl,
-                    isLiked = false
-                )
-            })
+        var result:Result<Playlist>
+        while (true){
+            result = runCatching<Playlist> {
+                val trackList = trackService.searchTrack(name)
+                Playlist(tracks = trackList.trackList.map {
+                    Track(
+                        name = it.title,
+                        artists = listOf(stepan.gorokhov.domain.models.Artist(it.artistName)),
+                        duration = it.duration,
+                        image = it.imageUrl,
+                        url = it.trackUrl,
+                        isLiked = false
+                    )
+                })
+            }
+            if (result.isSuccess){
+                break
+            }
         }
+        return result
     }
 
     override suspend fun getFavoritePlaylist(): Result<Playlist> {

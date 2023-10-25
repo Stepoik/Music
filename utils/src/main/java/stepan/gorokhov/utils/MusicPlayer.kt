@@ -20,7 +20,7 @@ import java.lang.IllegalStateException
 import javax.inject.Inject
 
 
-class MusicPlayer @Inject constructor(@AppContext private val context: Context) {
+class MusicPlayer @Inject constructor(private val context: Context) {
     private var mediaPlayer = initMediaPlayer()
     private val scope = CoroutineScope(Dispatchers.Main)
     private val _track = MutableStateFlow<Track?>(null)

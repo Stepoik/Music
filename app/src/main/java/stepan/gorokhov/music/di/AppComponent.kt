@@ -6,9 +6,10 @@ import dagger.Component
 import stepan.gorokhov.domain.repositories.TrackRepository
 import stepan.gorokhov.home_screen.di.HomeDeps
 import stepan.gorokhov.music.ui.main_screen.MainScreenViewModel
-import stepan.gorokhov.music.ui.search_screen.SearchScreenViewModel
+import stepan.gorokhov.notifications.di.NotificationDeps
 import stepan.gorokhov.player_screen.di.PlayerDeps
 import stepan.gorokhov.scopes.AppContext
+import stepan.gorokhov.search_screen.di.SearchDeps
 import javax.inject.Scope
 
 
@@ -18,13 +19,14 @@ annotation class AppScope
 
 @Component(modules = [TrackModule::class])
 @AppScope
-interface AppComponent:PlayerDeps, HomeDeps{
+interface AppComponent:PlayerDeps, HomeDeps, SearchDeps, NotificationDeps{
     override val repository: TrackRepository
+    override val context: Context
+
 
     @Component.Factory
     interface Factory {
-        fun create(@AppContext @BindsInstance context: Context): AppComponent
+        fun create(@BindsInstance context: Context): AppComponent
     }
     fun mainScreenViewModel():MainScreenViewModel
-    fun searchScreenViewModel():SearchScreenViewModel
 }
