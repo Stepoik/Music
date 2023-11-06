@@ -19,5 +19,8 @@ interface TrackRepository {
     suspend fun play(track: Track, playlist: Playlist)
     fun stop()
     suspend fun playNext()
+
+    suspend fun playPrevious()
     fun rewind(rewindValue:Float)
+
 }

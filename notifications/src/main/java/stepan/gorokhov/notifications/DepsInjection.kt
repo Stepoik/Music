@@ -1,4 +1,4 @@
-package stepan.gorokhov.notifications.ui
+package stepan.gorokhov.notifications
 
 import stepan.gorokhov.notifications.di.NotificationComponent
 

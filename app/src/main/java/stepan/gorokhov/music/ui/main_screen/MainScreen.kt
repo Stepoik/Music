@@ -33,8 +33,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
@@ -50,7 +53,8 @@ import stepan.gorokhov.music.ui.theme.MusicTheme
 import stepan.gorokhov.player_screen.PlayerDaggerViewModel
 import stepan.gorokhov.player_screen.ui.PlayerScreen
 import stepan.gorokhov.utils.daggerViewModel
-
+import java.lang.Math.pow
+import kotlin.math.pow
 
 
 @Composable
@@ -66,17 +70,19 @@ fun TrackBottom(track: stepan.gorokhov.domain.models.Track, bottomOffset: Float,
         PlayerScreen(daggerDepsViewModel = daggerViewModel {
             PlayerDaggerViewModel(component)
         }, onClose = onClose, interactionSource = interactionSource)
-        val alpha = bottomOffset.dp / LocalConfiguration.current.screenHeightDp
-        if (alpha.value > 0.05) {
+        val bottomSheetPeek = 100
+        val alpha = ((bottomOffset+bottomSheetPeek) / LocalConfiguration.current.screenHeightDp.dp.toPx().toDouble()).pow(2.0).toFloat()
+        println(alpha)
+        if (alpha > 0.05) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
-                    .alpha(alpha.value)
+                    .alpha(alpha)
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.onBackground)
                     .padding(horizontal = 24.dp, vertical = 2.dp)
-                    .clickable(enabled = alpha.value > 0.05, onClick = onClick)
+                    .clickable(enabled = alpha > 0.05, onClick = onClick)
             ) {
                 Row(Modifier.weight(1f)) {
                     AsyncImage(
@@ -118,7 +124,14 @@ fun MainScreenContent(track: stepan.gorokhov.domain.models.Track?) {
             BackHandler(enabled = sheetState.bottomSheetState.isExpanded) {
                 it()
             }
-            TrackBottom(track, sheetState.bottomSheetState.requireOffset(), onClose = it,
+            var offset = 0f
+            try{
+                offset = sheetState.bottomSheetState.requireOffset()
+            }
+            catch (e:IllegalStateException){
+                println(e)
+            }
+            TrackBottom(track,offset, onClose = it,
                 onClick = {
                     scope.launch {
                         sheetState.bottomSheetState.expand()
@@ -163,6 +176,12 @@ fun MainScreenContent(track: stepan.gorokhov.domain.models.Track?) {
     }
 }
 
+@Composable
+fun Dp.toPx():Float{
+    return with(LocalDensity.current){
+        this@toPx.toPx()
+    }
+}
 @Composable
 @Preview
 fun MainScreenPreview() {

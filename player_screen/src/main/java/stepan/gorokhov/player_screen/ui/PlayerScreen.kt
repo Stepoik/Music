@@ -85,7 +85,8 @@ fun PlayerScreen(
         onClose = onClose,
         onLikeClick = { viewModel.likeTrack() },
         onValueChange = { viewModel.rewind(it) },
-        interactionSource = interactionSource
+        interactionSource = interactionSource,
+        onPlayPreviousClick = {viewModel.playPrevious()}
     )
 }
 
@@ -103,6 +104,7 @@ internal fun PlayerScreenContent(
     onClose: () -> Unit,
     onLikeClick: () -> Unit,
     onValueChange: (Float) -> Unit,
+    onPlayPreviousClick:()->Unit,
     interactionSource: MutableInteractionSource
 ) {
     val gradient = Brush.linearGradient(
@@ -154,7 +156,8 @@ internal fun PlayerScreenContent(
                 onPlayClick = onPlayClick,
                 onStopClick = onStopClick,
                 onLoopClick = onLoopClicked,
-                onPlayNextClick = onPlayNextClick
+                onPlayNextClick = onPlayNextClick,
+                onPlayPreviousClick = onPlayPreviousClick
             )
         }
     }
@@ -168,7 +171,8 @@ internal fun StartStopBar(
     onPlayClick: () -> Unit,
     onStopClick: () -> Unit,
     onLoopClick: () -> Unit,
-    onPlayNextClick: () -> Unit
+    onPlayNextClick: () -> Unit,
+    onPlayPreviousClick:()->Unit
 ) {
     val gradient = Brush.horizontalGradient(listOf(Color(0xFF842ED8), Color(0xFFDB28A9)))
     Row(
@@ -184,7 +188,8 @@ internal fun StartStopBar(
             Icon(
                 Icons.Filled.KeyboardArrowLeft,
                 contentDescription = "Previous track",
-                tint = Color.White
+                tint = Color.White,
+                modifier = Modifier.clickable { onPlayPreviousClick() }
             )
             val playIcon =
                 if (isPlaying) ImageVector.vectorResource(id = R.drawable.stop_icon) else Icons.Filled.PlayArrow
@@ -408,7 +413,7 @@ internal fun PlayerScreenPreview() {
                 image = "https://sun1-18.userapi.com/impf/SBl28x3wXUGO5w9jRpZ4mBxRk1vAsdMpBeCkXQ/Rt-MggsKdjE.jpg?size=1920x768&quality=95&crop=0,0,1326,530&sign=72f2c86328e2e9c5e781dbb0b0435718&type=cover_group",
                 url = ""
             ),
-            ReplayState.NoReplay, false, {}, {}, {}, {}, {}, {}, {}, MutableInteractionSource(),
+            ReplayState.NoReplay, false, {}, {}, {}, {}, {}, {}, {},{}, MutableInteractionSource(),
         )
     }
 }

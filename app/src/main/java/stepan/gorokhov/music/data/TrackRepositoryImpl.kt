@@ -1,5 +1,6 @@
 package stepan.gorokhov.music.data
 
+import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,10 +11,12 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import stepan.gorokhov.domain.models.Playlist
 import stepan.gorokhov.domain.models.Track
-import stepan.gorokhov.music.data.datasources.TrackService
+import stepan.gorokhov.music.data.tracks.datasources.TrackService
 import stepan.gorokhov.utils.MusicPlayer
 import javax.inject.Inject
 import stepan.gorokhov.domain.repositories.TrackRepository
+import kotlin.math.max
+
 class TrackRepositoryImpl @Inject constructor(
     private val trackService: TrackService,
     private val musicPlayer: MusicPlayer
@@ -107,8 +110,6 @@ class TrackRepositoryImpl @Inject constructor(
                     if (currentPlaylist != null) {
                         var nextIndex: Int =
                             currentPlaylist!!.tracks.indexOf(currentTrack.value) + 1
-                        println(currentTrack.value)
-                        println(nextIndex)
                         if (_replayState.value == stepan.gorokhov.domain.models.ReplayState.ReplayPlaylist){
                             nextIndex %= currentPlaylist!!.tracks.size
                             musicPlayer.play(currentPlaylist!!.tracks[nextIndex])
@@ -121,6 +122,23 @@ class TrackRepositoryImpl @Inject constructor(
                         else{
                             musicPlayer.play(currentPlaylist!!.tracks[nextIndex-1])
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    override suspend fun playPrevious() {
+        withContext(Dispatchers.IO){
+            mutex.withLock {
+                if (currentPlaylist != null){
+                    try{
+                        val prevIndex: Int =
+                            currentPlaylist!!.tracks.indexOf(currentTrack.value) - 1
+                        musicPlayer.play(currentPlaylist!!.tracks[max(0, prevIndex)])
+                    }
+                    catch (e:IndexOutOfBoundsException){
+                        Log.e("Rep impl", "previous error")
                     }
                 }
             }

@@ -1,4 +1,4 @@
-package stepan.gorokhov.notifications.ui
+package stepan.gorokhov.notifications.services
 
 import android.app.Service
 import android.content.Intent
@@ -6,26 +6,33 @@ import android.os.IBinder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import stepan.gorokhov.notifications.DepsInjection
 
 class NotificationService:Service() {
     private val scope = CoroutineScope(Dispatchers.Main)
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         val action = intent.extras?.getInt("action")
-        println(action)
         DepsInjection.notificationComponent?.apply {
-            if (action== 1) {
-                if (trackRepository().isPlaying.value){
-                    trackRepository().stop()
-                }
-                else{
+            when(action){
+                0->{
                     scope.launch {
-                        trackRepository().play()
+                        trackRepository().playPrevious()
                     }
                 }
-            }
-            else if (action == 2){
-                scope.launch {
-                    trackRepository().playNext()
+                1->{
+                    if (trackRepository().isPlaying.value){
+                        trackRepository().stop()
+                    }
+                    else{
+                        scope.launch {
+                            trackRepository().play()
+                        }
+                    }
+                }
+                2-> {
+                    scope.launch {
+                        trackRepository().playNext()
+                    }
                 }
             }
         }

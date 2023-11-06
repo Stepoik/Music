@@ -1,4 +1,4 @@
-package stepan.gorokhov.music.data.models
+package stepan.gorokhov.music.data.tracks.models
 
 import com.google.gson.annotations.SerializedName
 

@@ -31,6 +31,11 @@ internal class PlayerScreenViewModel @Inject constructor(private val trackReposi
             trackRepository.playNext()
         }
     }
+    fun playPrevious(){
+        viewModelScope.launch {
+            trackRepository.playPrevious()
+        }
+    }
     fun pause() {
         trackRepository.stop()
     }

@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
     <application
         android:usesCleartextTraffic="true"
         android:name=".App"
@@ -25,7 +27,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name="stepan.gorokhov.notifications.ui.NotificationService"/>
+        <service android:name="stepan.gorokhov.notifications.services.NotificationService"/>
+        <service android:name=".MusicService" android:foregroundServiceType="mediaPlayback"/>
     </application>
 
 </manifest>
