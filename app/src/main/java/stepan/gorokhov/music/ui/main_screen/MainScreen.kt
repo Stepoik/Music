@@ -6,9 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,8 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.BottomSheetScaffold
-import androidx.compose.material.BottomSheetState
-import androidx.compose.material.BottomSheetValue
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.material3.MaterialTheme
@@ -36,39 +32,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import stepan.gorokhov.home_screen.HomeDaggerViewModel
 import stepan.gorokhov.music.appComponent
-import stepan.gorokhov.music.domain.models.Artist
-import stepan.gorokhov.music.domain.models.Track
-import stepan.gorokhov.music.ui.components.Minute
-import stepan.gorokhov.music.ui.home_screen.HOME_SCREEN_ROUTE
-import stepan.gorokhov.music.ui.home_screen.HomeScreen
-import stepan.gorokhov.music.ui.home_screen.homeScreen
-import stepan.gorokhov.music.ui.player_screen.PlayerScreen
-import stepan.gorokhov.music.ui.search_screen.navigateToSearchScreen
-import stepan.gorokhov.music.ui.search_screen.searchScreen
+import stepan.gorokhov.home_screen.ui.HOME_SCREEN_ROUTE
+import stepan.gorokhov.home_screen.ui.homeScreen
+import stepan.gorokhov.search_screen.ui.navigateToSearchScreen
+import stepan.gorokhov.search_screen.ui.searchScreen
 import stepan.gorokhov.music.ui.theme.MusicTheme
-import stepan.gorokhov.music.utils.daggerViewModel
+import stepan.gorokhov.player_screen.PlayerDaggerViewModel
+import stepan.gorokhov.player_screen.ui.PlayerScreen
+import stepan.gorokhov.utils.daggerViewModel
+import java.lang.Math.pow
+import kotlin.math.pow
 
-
-val mockTrack = Track(
-    "You Right",
-    listOf(Artist("Doja Cat"), Artist("The Weekend")),
-    isLiked = false,
-    url = "",
-    image = "https://static-cdn.jtvnw.net/jtv_user_pictures/e70b3a04-a290-43e5-854f-96a495a2a330-profile_image-70x70.png"
-)
 
 @Composable
 fun MainScreen(viewModel: MainScreenViewModel) {
@@ -76,24 +63,26 @@ fun MainScreen(viewModel: MainScreenViewModel) {
 }
 
 @Composable
-fun TrackBottom(track: Track, bottomOffset: Float, onClose: () -> Unit, onClick: () -> Unit) {
+fun TrackBottom(track: stepan.gorokhov.domain.models.Track, bottomOffset: Float, onClose: () -> Unit, onClick: () -> Unit) {
     val component = appComponent()
     val interactionSource = MutableInteractionSource()
     Box {
-        PlayerScreen(viewModel = daggerViewModel {
-            component.playerScreenViewModel()
+        PlayerScreen(daggerDepsViewModel = daggerViewModel {
+            PlayerDaggerViewModel(component)
         }, onClose = onClose, interactionSource = interactionSource)
-        val alpha = bottomOffset.dp / LocalConfiguration.current.screenHeightDp
-        if (alpha.value > 0.05) {
+        val bottomSheetPeek = 100
+        val alpha = ((bottomOffset+bottomSheetPeek) / LocalConfiguration.current.screenHeightDp.dp.toPx().toDouble()).pow(2.0).toFloat()
+        println(alpha)
+        if (alpha > 0.05) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
-                    .alpha(alpha.value)
+                    .alpha(alpha)
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.onBackground)
                     .padding(horizontal = 24.dp, vertical = 2.dp)
-                    .clickable(enabled = alpha.value>0.05, onClick = onClick)
+                    .clickable(enabled = alpha > 0.05, onClick = onClick)
             ) {
                 Row(Modifier.weight(1f)) {
                     AsyncImage(
@@ -119,7 +108,7 @@ fun TrackBottom(track: Track, bottomOffset: Float, onClose: () -> Unit, onClick:
                         )
                     }
                 }
-                Minute(seconds = track.duration)
+                stepan.gorokhov.components.Minute(seconds = track.duration)
             }
         }
     }
@@ -127,7 +116,7 @@ fun TrackBottom(track: Track, bottomOffset: Float, onClose: () -> Unit, onClick:
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun MainScreenContent(track: Track?) {
+fun MainScreenContent(track: stepan.gorokhov.domain.models.Track?) {
     val scope = rememberCoroutineScope()
     val sheetState = rememberBottomSheetScaffoldState()
     val content: @Composable (onClose: () -> Unit) -> Unit = if (track != null) {
@@ -135,7 +124,14 @@ fun MainScreenContent(track: Track?) {
             BackHandler(enabled = sheetState.bottomSheetState.isExpanded) {
                 it()
             }
-            TrackBottom(track, sheetState.bottomSheetState.requireOffset(), onClose = it,
+            var offset = 0f
+            try{
+                offset = sheetState.bottomSheetState.requireOffset()
+            }
+            catch (e:IllegalStateException){
+                println(e)
+            }
+            TrackBottom(track,offset, onClose = it,
                 onClick = {
                     scope.launch {
                         sheetState.bottomSheetState.expand()
@@ -159,14 +155,15 @@ fun MainScreenContent(track: Track?) {
         sheetPeekHeight = sheetPeekHeight,
         scaffoldState = sheetState
     ) {
+        val appComponent = appComponent()
         Box(Modifier.padding(it)) {
             val navController = rememberNavController()
             NavHost(navController = navController,
                 startDestination = HOME_SCREEN_ROUTE,
                 enterTransition = { fadeIn(animationSpec = tween(0)) },
                 exitTransition = { fadeOut(animationSpec = tween(0)) }) {
-                homeScreen(onSearchClicked = { navController.navigateToSearchScreen() })
-                searchScreen()
+                homeScreen(appComponent,onSearchClicked = { navController.navigateToSearchScreen() })
+                searchScreen(appComponent)
             }
         }
     }
@@ -179,6 +176,12 @@ fun MainScreenContent(track: Track?) {
     }
 }
 
+@Composable
+fun Dp.toPx():Float{
+    return with(LocalDensity.current){
+        this@toPx.toPx()
+    }
+}
 @Composable
 @Preview
 fun MainScreenPreview() {

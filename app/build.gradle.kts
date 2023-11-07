@@ -32,11 +32,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -49,13 +49,28 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    kotlin{
-        jvmToolchain(8)
-    }
+
 }
+
 val dagger_version = "2.46.1"
+val room_version = "2.5.2"
 dependencies {
+    implementation(project(path = ":domain"))
+    implementation(project(path = ":components"))
+    implementation(project(path = ":player_screen"))
+    implementation(project(path = ":utils"))
+    implementation(project(path = ":scopes"))
+    implementation(project(path = ":home_screen"))
+    implementation(project(path = ":search_screen"))
+    implementation(project(path = ":notifications"))
+
     implementation(libs.androidx.navigation.compose)
+
+    //Room
+    implementation(libs.androidx.room.runtime)
+    annotationProcessor("androidx.room:room-compiler:$room_version")
+    kapt(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.ktx)
 
     //Retrofit
     implementation(libs.converter.gson)
@@ -81,7 +96,6 @@ dependencies {
     implementation(libs.ui)
     implementation(libs.ui.graphics)
     implementation(libs.ui.tooling.preview)
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation("androidx.compose.material:material")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
