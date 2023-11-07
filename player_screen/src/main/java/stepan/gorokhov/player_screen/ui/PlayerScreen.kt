@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,6 +48,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
@@ -186,13 +188,15 @@ internal fun StartStopBar(
             horizontalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             Icon(
-                Icons.Filled.KeyboardArrowLeft,
+                painterResource(id = R.drawable.previous_button),
                 contentDescription = "Previous track",
                 tint = Color.White,
-                modifier = Modifier.clickable { onPlayPreviousClick() }
+                modifier = Modifier
+                    .clickable { onPlayPreviousClick() }
+                    .size(30.dp)
             )
             val playIcon =
-                if (isPlaying) ImageVector.vectorResource(id = R.drawable.stop_icon) else Icons.Filled.PlayArrow
+                if (isPlaying) painterResource(id = R.drawable.stop_icon) else rememberVectorPainter(Icons.Filled.PlayArrow)
             Icon(
                 playIcon,
                 contentDescription = "Play track",
@@ -210,12 +214,15 @@ internal fun StartStopBar(
                         gradient
                     )
                     .padding(18.dp)
+                    .size(30.dp)
             )
             Icon(
-                Icons.Filled.KeyboardArrowRight,
+                painterResource(id = R.drawable.forward_button),
                 contentDescription = "Next track",
                 tint = Color.White,
-                modifier = Modifier.clickable { onPlayNextClick() }
+                modifier = Modifier
+                    .clickable { onPlayNextClick() }
+                    .size(30.dp)
             )
         }
         ReplayIcon(onClick = onLoopClick, replayState = replayState)
@@ -335,7 +342,7 @@ internal fun TrackNameWithArtist(
     val artists: String = track.artists.joinToString(separator = ", ") { it.name }
     val likedIcon = if (track.isLiked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder
     Row(modifier = modifier, horizontalArrangement = Arrangement.SpaceBetween) {
-        Column {
+        Column(Modifier.weight(1f)){
             Text(
                 text = track.name,
                 style = MaterialTheme.typography.titleLarge,
@@ -407,6 +414,7 @@ internal fun PlayerScreenPreview() {
         PlayerScreenContent(
             0,
             Track(
+                "id",
                 "You Right",
                 listOf(Artist("Doja Cat"), Artist("The Weekend")),
                 isLiked = false,

@@ -52,7 +52,12 @@ class MusicPlayer @Inject constructor(private val context: Context) {
     }
     fun likeTrack(){
         if (_track.value != null){
-            _track.value = _track.value!!.copy(isLiked = !_track.value!!.isLiked)
+            _track.value = _track.value!!.copy(isLiked = true)
+        }
+    }
+    fun dislikeTrack(){
+        if (_track.value != null){
+            _track.value = _track.value!!.copy(isLiked = false)
         }
     }
     suspend fun play(track: Track? =  null) {

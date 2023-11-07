@@ -25,6 +25,7 @@ import stepan.gorokhov.components.SearchTextField
 
 
 val mockTrack = stepan.gorokhov.domain.models.Track(
+    "id",
     "You Right",
     listOf(
         stepan.gorokhov.domain.models.Artist("Doja Cat"),

@@ -12,9 +12,6 @@ interface TrackRepository {
     val replayState:StateFlow<ReplayState>
 
     fun nextReplayState()
-    fun likeCurrent()
-    suspend fun getTracksByName(name:String):Result<Playlist>
-    suspend fun getFavoritePlaylist():Result<Playlist>
     suspend fun play()
     suspend fun play(track: Track, playlist: Playlist)
     fun stop()

@@ -1,6 +1,7 @@
 package stepan.gorokhov.search_screen.di
 
 import dagger.Component
+import stepan.gorokhov.domain.repositories.SearchRepository
 import stepan.gorokhov.domain.repositories.TrackRepository
 import stepan.gorokhov.search_screen.ui.SearchScreenViewModel
 import javax.inject.Scope
@@ -10,6 +11,7 @@ annotation class SearchScope
 
 interface SearchDeps{
     val repository: TrackRepository
+    val searchRepository:SearchRepository
 }
 @Component(dependencies = [SearchDeps::class])
 @SearchScope

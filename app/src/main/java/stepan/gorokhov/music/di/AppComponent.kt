@@ -3,6 +3,8 @@ package stepan.gorokhov.music.di
 import android.content.Context
 import dagger.BindsInstance
 import dagger.Component
+import stepan.gorokhov.domain.repositories.FavouriteRepository
+import stepan.gorokhov.domain.repositories.SearchRepository
 import stepan.gorokhov.domain.repositories.TrackRepository
 import stepan.gorokhov.home_screen.di.HomeDeps
 import stepan.gorokhov.music.ui.main_screen.MainScreenViewModel
@@ -16,16 +18,19 @@ import javax.inject.Scope
 annotation class AppScope
 
 
-@Component(modules = [TrackModule::class, RetrofitModule::class, RegistrationModule::class])
+@Component(modules = [TrackModule::class, RetrofitModule::class, RegistrationModule::class, DatabaseModule::class, SearchModule::class, FavouriteModule::class])
 @AppScope
-interface AppComponent:PlayerDeps, HomeDeps, SearchDeps, NotificationDeps{
+interface AppComponent : PlayerDeps, HomeDeps, SearchDeps, NotificationDeps {
     override val repository: TrackRepository
     override val context: Context
+    override val favouriteRepository: FavouriteRepository
+    override val searchRepository: SearchRepository
 
 
     @Component.Factory
     interface Factory {
         fun create(@BindsInstance context: Context): AppComponent
     }
-    fun mainScreenViewModel():MainScreenViewModel
+
+    fun mainScreenViewModel(): MainScreenViewModel
 }

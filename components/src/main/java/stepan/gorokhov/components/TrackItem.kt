@@ -61,6 +61,7 @@ private fun TrackItemPreview() {
         Row {
             TrackItem(
                 track = stepan.gorokhov.domain.models.Track(
+                    "",
                     "Hello",
                     artists = listOf(stepan.gorokhov.domain.models.Artist("Morgenshtern")),
                     isLiked = true,

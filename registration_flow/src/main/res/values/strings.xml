@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="registration">Registration</string>
+    <string name="login">Login</string>
     <string name="email">Email</string>
     <string name="password">Password</string>
 </resources>

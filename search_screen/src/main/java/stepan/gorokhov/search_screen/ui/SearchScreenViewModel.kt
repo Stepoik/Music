@@ -11,6 +11,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import stepan.gorokhov.domain.models.Playlist
 import stepan.gorokhov.domain.models.Track
+import stepan.gorokhov.domain.repositories.SearchRepository
 import stepan.gorokhov.domain.repositories.TrackRepository
 import javax.inject.Inject
 
@@ -18,7 +19,7 @@ internal sealed class SearchState{
     object Loading: SearchState()
     data class SearchResult(val playlist: Playlist): SearchState()
 }
-internal class SearchScreenViewModel @Inject constructor(private val repository: TrackRepository):ViewModel() {
+internal class SearchScreenViewModel @Inject constructor(private val repository: TrackRepository, private val searchRepository: SearchRepository):ViewModel() {
     private val _searchValue = MutableStateFlow("")
     val searchValue: StateFlow<String> get() = _searchValue
     private val _searchState = MutableStateFlow<SearchState>(
@@ -33,17 +34,19 @@ internal class SearchScreenViewModel @Inject constructor(private val repository:
     private val isPlaying = repository.isPlaying
 
     private val searchScope = CoroutineScope(Dispatchers.Main)
+    init {
+        viewModelScope.launch {
+            searchRepository.foundTracks.collect{
+                _searchState.value = SearchState.SearchResult(it)
+            }
+        }
+    }
     fun search(searchValue:String){
         _searchValue.value = searchValue
         searchScope.coroutineContext.cancelChildren()
         searchScope.launch {
             _searchState.value = SearchState.Loading
-            val searchResult = repository.getTracksByName(searchValue)
-            if (isActive){
-                searchResult.onSuccess {
-                    _searchState.value = SearchState.SearchResult(it)
-                }
-            }
+            searchRepository.getTracksByName(searchValue)
         }
     }
     fun selectTrack(track: Track, playlist: Playlist){

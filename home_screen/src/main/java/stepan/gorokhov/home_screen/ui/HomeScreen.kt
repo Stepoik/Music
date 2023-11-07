@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.swiperefresh.SwipeRefresh
@@ -159,12 +160,21 @@ internal fun Favourites(
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 30.dp)
         )
-        for (track in favourite.tracks) {
-            stepan.gorokhov.components.TrackItem(track = track, modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 24.dp), onSelect = {
-                onSelectTrack(it, favourite)
-            })
+        if (favourite.tracks.isNotEmpty()) {
+            for (track in favourite.tracks) {
+                stepan.gorokhov.components.TrackItem(track = track, modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 24.dp), onSelect = {
+                    onSelectTrack(it, favourite)
+                })
+            }
+        } else {
+            Text(
+                text = "Empty",
+                style = MaterialTheme.typography.titleLarge,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
@@ -198,7 +208,10 @@ internal fun PlaylistList(modifier: Modifier = Modifier) {
 
         }
         items(count = 5) {
-            PlaylistItem(stepan.gorokhov.domain.models.Artist("Chill your mind"), playlistName = "R&B Playlist")
+            PlaylistItem(
+                stepan.gorokhov.domain.models.Artist("Chill your mind"),
+                playlistName = "R&B Playlist"
+            )
         }
     }
 }
@@ -222,7 +235,7 @@ internal fun WelcomeText(modifier: Modifier = Modifier) {
 @Composable
 @Preview
 internal fun HomeScreenPreview() {
-    MaterialTheme{
+    MaterialTheme {
         HomeScreenContent(
             HomeScreenState.Loading, { track, playlist -> }, {}, {}
         )
